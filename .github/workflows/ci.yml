@@ -1,0 +1,36 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Build inside the official Drogon image (has cmake, drogon, sqlite3, jsoncpp,
+      # OpenSSL). The image ships gcc-11 / clang-14 without the unversioned symlinks,
+      # so CC/CXX are set explicitly.
+      - name: Build
+        run: |
+          docker run --rm -v "$PWD":/app -w /app \
+            -e CC=gcc-11 -e CXX=g++-11 \
+            drogonframework/drogon:latest \
+            bash -lc "cmake -S . -B build -DCMAKE_BUILD_TYPE=Release && cmake --build build -j\$(nproc)"
+
+      - name: Smoke test (register + login)
+        run: |
+          docker run --rm -v "$PWD":/app -w /app -e PORT=4310 \
+            drogonframework/drogon:latest bash -lc '
+              ./build/cliuno_drogon > /tmp/srv.log 2>&1 & sleep 2.5
+              code=$(curl -s -o /dev/null -w "%{http_code}" -X POST localhost:4310/api/v1/auth/register \
+                -H "Content-Type: application/json" \
+                -d "{\"username\":\"ci\",\"first_name\":\"C\",\"last_name\":\"I\",\"email\":\"ci@t.io\",\"phone\":\"1\",\"password\":\"password123\",\"password_confirmation\":\"password123\"}")
+              echo "register HTTP $code"; test "$code" = "201"
+              curl -s -X POST localhost:4310/api/v1/auth/login -H "Content-Type: application/json" \
+                -d "{\"usernameOrEmail\":\"ci\",\"password\":\"password123\"}" | grep -q "\"token\"" && echo "login OK"
+            '
