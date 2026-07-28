@@ -30,6 +30,7 @@ int main()
             "id INTEGER PRIMARY KEY AUTOINCREMENT,"
             "username TEXT UNIQUE NOT NULL, first_name TEXT, last_name TEXT,"
             "email TEXT UNIQUE NOT NULL, phone TEXT, password TEXT NOT NULL,"
+            "avatar_url TEXT,"
             "role_id INTEGER,"
             "is_verified INTEGER NOT NULL DEFAULT 0,"
             "is_deleted INTEGER NOT NULL DEFAULT 0,"
@@ -59,6 +60,14 @@ int main()
             "created_at TEXT NOT NULL DEFAULT (datetime('now')),"
             "UNIQUE(follower_id, following_id))"};
         for (const auto &sql : schema) db->execSqlSync(sql);
+        // Databases created before avatar_url existed: add it, ignore "duplicate column".
+        try
+        {
+            db->execSqlSync("ALTER TABLE users ADD COLUMN avatar_url TEXT");
+        }
+        catch (const std::exception &)
+        {
+        }
         LOG_INFO << "CLIuno Drogon schema ready";
     });
 

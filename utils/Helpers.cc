@@ -335,6 +335,7 @@ Json::Value userToJson(const drogon::orm::Row &row)
     u["last_name"] = row["last_name"].isNull() ? "" : row["last_name"].as<std::string>();
     u["email"] = row["email"].as<std::string>();
     u["phone"] = row["phone"].isNull() ? "" : row["phone"].as<std::string>();
+    u["avatar_url"] = row["avatar_url"].isNull() ? "" : row["avatar_url"].as<std::string>();
     u["role_id"] = row["role_id"].isNull() ? 0 : row["role_id"].as<int64_t>();
     u["is_verified"] = row["is_verified"].as<int>() != 0;
     u["is_otp_enabled"] = row["is_otp_enabled"].as<int>() != 0;

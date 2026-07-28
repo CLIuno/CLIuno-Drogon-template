@@ -13,3 +13,7 @@
 .vscode/
 .idea/
 .DS_Store
+
+# uploaded images
+uploads/*
+!uploads/.gitkeep

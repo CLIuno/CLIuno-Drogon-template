@@ -71,6 +71,13 @@ std::string strv(const Json::Value &b, const char *k)
 {
     return b.isMember(k) && b[k].isString() ? b[k].asString() : "";
 }
+
+// Frontends may send either casing; image_url is the stored and returned field.
+std::string imageUrlOf(const Json::Value &b)
+{
+    auto snake = strv(b, "image_url");
+    return snake.empty() ? strv(b, "imageUrl") : snake;
+}
 } // namespace
 
 void PostController::list(const HttpRequestPtr &req,
@@ -111,7 +118,7 @@ void PostController::create(const HttpRequestPtr &req,
     auto db = app().getDbClient();
     auto ins = db->execSqlSync(
         "INSERT INTO posts(user_id,title,content,image_url) VALUES(?,?,?,?)", *id, title,
-        strv(b, "content"), strv(b, "image_url"));
+        strv(b, "content"), imageUrlOf(b));
     auto rows = db->execSqlSync("SELECT * FROM posts WHERE id=?", ins.insertId());
     Json::Value data(Json::objectValue);
     data["post"] = postJson(db, rows[0]);
@@ -149,7 +156,7 @@ void PostController::update(const HttpRequestPtr &req,
         db->execSqlSync(
             "UPDATE posts SET title=COALESCE(?,title), content=COALESCE(?,content), "
             "image_url=COALESCE(?,image_url) WHERE id=? AND user_id=?",
-            strv(b, "title"), strv(b, "content"), strv(b, "image_url"), std::stoll(id), *uid);
+            strv(b, "title"), strv(b, "content"), imageUrlOf(b), std::stoll(id), *uid);
         auto rows = db->execSqlSync("SELECT * FROM posts WHERE id=?", std::stoll(id));
         if (rows.empty()) return cb(fail(k404NotFound, "warning", "Post not found"));
         Json::Value data(Json::objectValue);

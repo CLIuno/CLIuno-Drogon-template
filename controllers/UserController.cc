@@ -83,8 +83,8 @@ void UserController::updateCurrent(const HttpRequestPtr &req,
     auto db = app().getDbClient();
     db->execSqlSync(
         "UPDATE users SET first_name=COALESCE(?,first_name), last_name=COALESCE(?,last_name),"
-        "phone=COALESCE(?,phone) WHERE id=?",
-        strv(b, "first_name"), strv(b, "last_name"), strv(b, "phone"), *id);
+        "phone=COALESCE(?,phone), avatar_url=COALESCE(?,avatar_url) WHERE id=?",
+        strv(b, "first_name"), strv(b, "last_name"), strv(b, "phone"), strv(b, "avatar_url"), *id);
     auto rows = db->execSqlSync("SELECT * FROM users WHERE id=?", *id);
     Json::Value data(Json::objectValue);
     data["user"] = userToJson(rows[0]);
